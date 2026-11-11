@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Program Penghitung Total Belanja</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --border: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 600px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .form-group input {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+    }
+
+    button {
+      padding: 10px 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background-color: #f9fafb;
+    }
+
+    .btn-delete {
+      background-color: #ef4444;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .btn-delete:hover {
+      background-color: #dc2626;
+    }
+
+    .summary {
+      margin-top: 20px;
+      background-color: #f9fafb;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .summary-row.total {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: var(--primary);
+      border-top: 1px dashed var(--border);
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Kalkulator Belanja</h2>
+    
+    <div class="form-group">
+      <input type="text" id="namaBarang" placeholder="Nama Barang">
+      <input type="number" id="hargaBarang" placeholder="Harga (Rp)" min="0">
+      <input type="number" id="jumlahBarang" placeholder="Jumlah" min="1" value="1">
+      <button onclick="tambahBarang()">Tambah</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Barang</th>
+          <th>Harga</th>
+          <th>Qty</th>
+          <th>Subtotal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="daftarBelanja">
+        <!-- Item belanjaan akan muncul di sini -->
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <div class="summary-row">
+        <span>Total Sebelum Diskon:</span>
+        <span id="subtotalText">Rp 0</span>
+      </div>
+      <div class="summary-row">
+        <span>Diskon:</span>
+        <span id="diskonText">0% (-Rp 0)</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total Bayar:</span>
+        <span id="totalText">Rp 0</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let keranjang = [];
+
+    function formatRupiah(angka) {
+      return 'Rp ' + angka.toLocaleString('id-ID');
+    }
+
+    function tambahBarang() {
+      const namaInput = document.getElementById('namaBarang');
+      const hargaInput = document.getElementById('hargaBarang');
+      const jumlahInput = document.getElementById('jumlahBarang');
+
+      const nama = namaInput.value.trim();
+      const harga = parseFloat(hargaInput.value);
+      const jumlah = parseInt(jumlahInput.value);
+
+      if (!nama || isNaN(harga) || harga <= 0 || isNaN(jumlah) || jumlah <= 0) {
+        alert('Harap isi semua kolom dengan benar!');
+        return;
+      }
+
+      const subtotal = harga * jumlah;
+      keranjang.push({ id: Date.now(), nama, harga, jumlah, subtotal });
+
+      // Reset Input
+      namaInput.value = '';
+      hargaInput.value = '';
+      jumlahInput.value = '1';
+      namaInput.focus();
+
+      updateTampilan();
+    }
+
+    function hapusBarang(id) {
+      keranjang = keranjang.filter(item => item.id !== id);
+      updateTampilan();
+    }
+
+    function hitungDiskon(total) {
+      if (total >= 500000) return 15;
+      if (total >= 250000) return 10;
+      if (total >= 100000) return 5;
+      return 0;
+    }
+
+    function updateTampilan() {
+      const tbody = document.getElementById('daftarBelanja');
+      tbody.innerHTML = '';
+
+      let totalSebelumDiskon = 0;
+
+      keranjang.forEach(item => {
+        totalSebelumDiskon += item.subtotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.nama}</td>
+          <td>${formatRupiah(item.harga)}</td>
+          <td>${item.jumlah}</td>
+          <td>${formatRupiah(item.subtotal)}</td>
+          <td><button class="btn-delete" onclick="hapusBarang(${item.id})">Hapus</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const persenDiskon = hitungDiskon(totalSebelumDiskon);
+      const nominalDiskon = totalSebelumDiskon * (persenDiskon / 100);
+      const totalAkhir = totalSebelumDiskon - nominalDiskon;
+
+      document.getElementById('subtotalText').innerText = formatRupiah(totalSebelumDiskon);
+      document.getElementById('diskonText').innerText = `${persenDiskon}% (-${formatRupiah(nominalDiskon)})`;
+      document.getElementById('totalText').innerText = formatRupiah(totalAkhir);
+    }
+  </script>
+
+</body>
+</html>
